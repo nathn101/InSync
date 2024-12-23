@@ -1,0 +1,23 @@
+/* filepath: /C:/Users/natha/Documents/Coding Projects/Spotify App/frontend/src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+.hover\:underline-animation::after {
+    content: '';
+    display: block;
+    width: 0;
+    height: 2px;
+    background: currentColor;
+    transition: width 0.3s ease-in-out;
+    margin: auto;
+}
+
+.hover\:underline-animation:hover::after {
+    width: 100%;
+}
