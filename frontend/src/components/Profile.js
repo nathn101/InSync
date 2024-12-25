@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { FaGear } from "react-icons/fa6";
+import Cookies from 'js-cookie';
 
 const Profile = () => {
     const [showProfileForm, setShowProfileForm] = useState(false);
@@ -8,8 +9,9 @@ const Profile = () => {
 
     const handleSignOut = () => {
         localStorage.removeItem('token');
-        document.cookie = 'token=; Max-Age=0; path=/;'; // Clear the cookie
-        history.push('/SignIn');
+        Cookies.remove('token'); // Remove the token cookie
+        window.dispatchEvent(new Event('signout')); // Dispatch custom signout event
+        history.push('/Home');
     };
 
     const handleProfileUpdate = (e) => {
