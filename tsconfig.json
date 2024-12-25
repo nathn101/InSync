@@ -13,9 +13,9 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
-      "@backend/*": ["backend/*"]
+      "@backend/*": ["src/backend/*"]
     }
   },
-  "include": ["src/**/*", "backend/**/*", "auth.ts"],
+  "include": ["src/**/*", "src/backend/**/*", "auth.ts"],
   "exclude": ["node_modules", "dist"]
 }
