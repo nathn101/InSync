@@ -174,6 +174,9 @@ app.listen(port, () => {
 app.use(express.static(path.join(__dirname, '../frontend/build')));
 
 // Serve static files from the public directory
+// Music from #Uppbeat (free for Creators!):
+// https://uppbeat.io/t/adi-goldstein/i-dont-need-your-love
+// License code: O7PW0MDMVUDSBKIO
 app.use('/audio', express.static(path.join(__dirname, '../frontend/public/audio')));
 
 app.get('/', (req, res) => {
