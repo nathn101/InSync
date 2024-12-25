@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^13.5.0",
     "bcryptjs": "^2.4.3",
     "express": "^4.21.2",
+    "firebase": "^11.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.2",
     "react": "^18.2.0",

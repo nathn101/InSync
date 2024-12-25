@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 const path = require('path');
 const cors = require('cors'); // Import the cors package
+const cookieParser = require('cookie-parser');
+const nodemailer = require('nodemailer'); // Import nodemailer
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -21,6 +23,7 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 // Verify that the MONGODB_URI environment variable is being read correctly
 console.log('MONGODB_URI:', process.env.MONGODB_URI);
@@ -41,12 +44,12 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 const verifyToken = (req, res, next) => {
-    const Token = req.headers['authorization'];
-    if (!Token) {
+    const token = req.cookies.token; // Use the token from cookies
+    if (!token) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    jwt.verify(Token, 'secret', (err, decoded) => {
+    jwt.verify(token, 'secret', (err, decoded) => {
         if (err) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -54,6 +57,15 @@ const verifyToken = (req, res, next) => {
         next();
     });
 };
+
+// Configure nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
 
 app.post('/api/register', async (req, res) => {
     try {
@@ -82,6 +94,7 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
     try {
+        console.log(req.body); // Log the request body
         const user = await User.findOne({ email: req.body.email });
         if (!user) {
             return res.status(400).json({ error: 'Invalid email or password' });
@@ -93,6 +106,7 @@ app.post('/api/login', async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id }, 'secret', { expiresIn: '1h' });
+        res.cookie('token', token, { httpOnly: true }); // Set the token in a cookie
         res.json({ token });
     } catch (error) {
         console.error('Error logging in user:', error); // Log the error details
@@ -100,7 +114,39 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-app.get('/api/users', async (req, res) => {
+app.post('/api/forgot-password', async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.body.email });
+        if (!user) {
+            return res.status(400).json({ error: 'Email not found' });
+        }
+
+        // Generate a password reset token (this is a simple example, consider using a more secure method)
+        const resetToken = jwt.sign({ id: user._id }, 'secret', { expiresIn: '1h' });
+
+        // Send the reset token to the user's email
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: user.email,
+            subject: 'Password Reset',
+            text: `You requested a password reset. Click the link to reset your password: http://localhost:3000/reset-password?token=${resetToken}`,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error('Error sending email:', error);
+                return res.status(500).json({ error: 'Error sending email' });
+            }
+            console.log('Email sent:', info.response);
+            res.json({ message: 'Password reset link sent to your email' });
+        });
+    } catch (error) {
+        console.error('Error handling forgot password:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/users', verifyToken, async (req, res) => {
     try {
         const users = await User.find();
         res.json(users);
@@ -108,6 +154,16 @@ app.get('/api/users', async (req, res) => {
         console.error('Error retrieving users:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+app.get('/api/profile', verifyToken, (req, res) => {
+    // Handle profile logic here
+    res.json({ message: 'Profile data' });
+});
+
+app.get('/api/match', verifyToken, (req, res) => {
+    // Handle match logic here
+    res.json({ message: 'Match data' });
 });
 
 app.listen(port, () => {

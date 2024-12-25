@@ -1,39 +1,122 @@
+import React, { useState } from 'react';
+import { useHistory } from 'react-router-dom';
+import { FaGear } from "react-icons/fa6";
+
 const Profile = () => {
-    return ( 
+    const [showProfileForm, setShowProfileForm] = useState(false);
+    const history = useHistory();
+
+    const handleSignOut = () => {
+        localStorage.removeItem('token');
+        document.cookie = 'token=; Max-Age=0; path=/;'; // Clear the cookie
+        history.push('/SignIn');
+    };
+
+    const handleProfileUpdate = (e) => {
+        e.preventDefault();
+        const profileForm = document.querySelector('.profile-form-container');
+        const bioForm = document.querySelector('.bio-form-container');
+        const name = profileForm.name.value;
+        const age = profileForm.age.value;
+        const gender = profileForm.gender.value; // Get the gender value
+        const biography = bioForm.biography.value;
+
+        console.log('Profile updated:', { name, age, gender, biography });
+        // Add your logic to save the profile data
+    };
+
+    const toggleProfileForm = () => {
+        setShowProfileForm(!showProfileForm);
+    };
+
+    return (
         <div className="relative flex justify-center items-center flex-grow bg-gradient-to-b from-black via-gray-900 to-green-900 min-h-screen">
-            <div className="bg-gray-800 bg-opacity-50 p-8 rounded-lg text-center text-white max-w-lg w-full">
-                <h1 className="text-3xl mb-6">My Profile</h1>
-                <form action="" className="profile-form-container space-y-4">
-                    <div>
-                        <label htmlFor="name" className="block text-left mb-2">Name</label>
-                        <input type="text" name="name" className="w-full p-2 rounded bg-gray-800 border border-gray-700" placeholder="Enter your name" required/>
+            <div className="bg-gray-800 bg-opacity-50 p-6 pb-6 rounded-lg text-center text-white w-3/5 mb-16">
+                <div className="flex gap-4 items-center mb-6">
+                    <img 
+                        src="https://via.placeholder.com/150" 
+                        alt="User Avatar" 
+                        className="w-24 h-24 rounded-full"
+                    />
+                    <h1 className="text-3xl">Username</h1>
+                    <button 
+                        onClick={toggleProfileForm} 
+                        className="ml-auto p-2 rounded bg-gray-700 hover:bg-gray-600 text-white"
+                    >
+                        {showProfileForm ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                                <path fillRule="evenodd" d="M6.225 4.811a1 1 0 011.414 0L12 9.172l4.361-4.361a1 1 0 111.414 1.414L13.414 10.586l4.361 4.361a1 1 0 01-1.414 1.414L12 12l-4.361 4.361a1 1 0 01-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                        ) : (
+                            <FaGear />
+                        )}
+                    </button>
+                </div>
+                {!showProfileForm && (
+                    <div className="flex w-full">
+                        <span><p>Followers: </p></span>
+                        <span><p>Following: </p></span>
                     </div>
-                    <div>
-                        <label htmlFor="age" className="block text-left mb-2">Age</label>
-                        <input type="number" name="age" className="w-full p-2 rounded bg-gray-800 border border-gray-700" placeholder="Enter your age" required/>
-                    </div>
-                    <div>
-                        <p className="text-left mb-2">Gender</p>
-                        <div className="flex items-center space-x-4">
-                            <label htmlFor="male" className="flex items-center">
-                                <input type="radio" name="gender" value="male" id="male" className="mr-2" required/>
-                                Male
-                            </label>
-                            <label htmlFor="female" className="flex items-center">
-                                <input type="radio" name="gender" value="female" id="female" className="mr-2" required/>
-                                Female
-                            </label>
+                )}
+                {showProfileForm && (
+                    <div className="flex space-x-6 w-full">
+                        <div className="p-6 rounded-lg text-center text-white w-1/2">
+                            <h1 className="text-2xl mb-4">My Profile</h1>
+                            <form action="" className="profile-form-container space-y-3">
+                                <div>
+                                    <label htmlFor="name" className="block text-left mb-1">Name</label>
+                                    <input type="text" name="name" className="w-full p-2 rounded bg-gray-800 border border-gray-700" placeholder="Enter your name" required/>
+                                </div>
+                                <div>
+                                    <label htmlFor="age" className="block text-left mb-1">Age</label>
+                                    <input type="number" name="age" className="w-full p-2 rounded bg-gray-800 border border-gray-700" placeholder="Enter your age" required/>
+                                </div>
+                                <div>
+                                    <p className="text-left mb-1">Gender</p>
+                                    <div className="flex items-center space-x-3">
+                                        <label htmlFor="male" className="flex items-center">
+                                            <input type="radio" name="gender" value="male" id="male" className="mr-1" required/>
+                                            Male
+                                        </label>
+                                        <label htmlFor="female" className="flex items-center">
+                                            <input type="radio" name="gender" value="female" id="female" className="mr-1" required/>
+                                            Female
+                                        </label>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div className="p-6 rounded-lg text-center text-white w-1/2">
+                            <h1 className="text-2xl mb-4">Biography</h1>
+                            <form action="" className="bio-form-container space-y-3">
+                                <div>
+                                    <label htmlFor="biography" className="block text-left mb-1">Description</label>
+                                    <textarea name="biography" className="w-full p-2 rounded bg-gray-800 border border-gray-700 max-h-40" placeholder="Write something about yourself..." rows="5" required></textarea>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    <div>
-                        <label htmlFor="email" className="block text-left mb-2">Email</label>
-                        <input type="email" name="email" className="w-full p-2 rounded bg-gray-800 border border-gray-700" placeholder="Enter your email" required/>
+                )}
+                {showProfileForm && (
+                    <div className="flex w-full justify-between p-8">
+                        <button
+                            type="submit"
+                            onClick={handleProfileUpdate}
+                            className="btn w-1/5 p-2 mt-4 rounded bg-green-500 hover:bg-green-600 text-white"
+                        >
+                            Save Changes
+                        </button>
+                        <button 
+                            onClick={handleSignOut} 
+                            className="mt-4 p-2 rounded bg-gray-500 hover:bg-gray-600 text-red-500 w-1/5"
+                        >
+                            Sign Out
+                        </button>
                     </div>
-                    <button type="submit" className="btn w-full p-2 rounded bg-green-500 hover:bg-green-600 text-white">Save Changes</button>
-                </form>
+                )}
             </div>
         </div>
     );
 }
- 
+
 export default Profile;
