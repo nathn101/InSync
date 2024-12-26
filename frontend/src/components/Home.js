@@ -127,7 +127,7 @@ const Home = () => {
                 <h1 className="text-4xl mb-4">Welcome to <span className="text-green-500">InSync</span></h1>
                 <p className="text-xl">Your personalized music experience</p>
             </div>
-            <div className="absolute bottom-16 left-2 flex space-x-4">
+            <div className="absolute bottom-4 left-2 flex space-x-4">
                 <button 
                     onClick={handlePlayPause} 
                     className="text-white p-4 flex items-center justify-center"

@@ -23,7 +23,7 @@ const Navbar = () => {
     }, []);
 
     return (
-        <nav className="flex justify-between items-center bg-black p-4">
+        <nav className="absolute top-0 left-0 w-full flex justify-between items-center bg-black p-4 z-50">
             <a href="/" className="text-green-500 text-3xl no-underline">InSync</a>
             <div className="flex gap-4">
                 <Link className="text-white no-underline text-base hover:text-green-500 hover:underline-animation" to="/">Home</Link>
@@ -31,7 +31,8 @@ const Navbar = () => {
                 {isSignedIn ? (
                     <>
                         <Link className="text-white no-underline text-base hover:text-green-500 hover:underline-animation" to="/Match">Match</Link>
-                        <Link className="text-white no-underline text-base hover:text-green-500 hover:underline-animation" to="/Profile">Profile</Link>                    </>
+                        <Link className="text-white no-underline text-base hover:text-green-500 hover:underline-animation" to="/Profile">Profile</Link>
+                    </>
                 ) : (
                     <Link className="text-white no-underline text-base hover:text-green-500 hover:underline-animation" to="/SignIn">Sign In</Link>
                 )}
