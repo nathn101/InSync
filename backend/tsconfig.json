@@ -11,6 +11,6 @@
     "resolveJsonModule": true,
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "include": ["src/**/*", "backend/**/*", "auth.ts"],
+  "include": ["src/**/*", "backend/**/*", "auth.ts", "api"],
   "exclude": ["node_modules", "dist"]
 }
