@@ -3,6 +3,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, signInWithCustomToken } from 'firebase/auth';
 import { auth, facebookProvider, googleProvider } from '../firebase';
 import Cookies from 'js-cookie';
+import config from '../context/config';
 
 const SignIn = () => {
     const [email, setEmail] = useState('');
@@ -42,7 +43,7 @@ const SignIn = () => {
     };
 
     const handleSpotifyLogin = () => {
-        window.location.href = 'http://localhost:5000/api/spotifylogin';
+        window.location.href = config.SPOTIFY_LOGIN_URL;
     };
 
     const handleOAuthSignIn = async (provider) => {

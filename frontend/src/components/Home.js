@@ -129,7 +129,7 @@ const Home = () => {
             <canvas ref={canvasRef} className="absolute inset-0 w-full h-full"></canvas>
             <div className="relative bg-opacity-50 p-16 rounded-lg text-center text-white max-w-4xl w-full">
                 <h1 className="text-4xl mb-4">Welcome to <span className="text-green-500">InSync</span></h1>
-                <p className="text-xl">Your personalized music experience</p>
+                <p className="text-xl">Your personalized music circle</p>
             </div>
             <div className="absolute bottom-4 left-2 flex space-x-4">
                 <button 
