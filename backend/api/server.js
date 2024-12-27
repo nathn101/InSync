@@ -59,9 +59,6 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// Verify that the MONGODB_URI environment variable is being read correctly
-console.log('MONGODB_URI:', process.env.MONGODB_URI);
-
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
 .then(() => {
     console.log('Connected to MongoDB');
@@ -227,6 +224,11 @@ app.use('/audio', express.static(path.join(__dirname, '../frontend/public/audio'
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
+
+// Add a simple endpoint to verify the server is running
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
 });
 
 var stateKey = 'spotify_auth_state';
