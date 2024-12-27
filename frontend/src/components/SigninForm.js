@@ -13,8 +13,6 @@ const SignIn = () => {
 
     useEffect(() => {  
         const firebaseToken = Cookies.get('firebase_token');
-        const spotifyToken = Cookies.get('spotify_access_token');
-        const spotifyRefreshToken = Cookies.get('spotify_refresh_token');
         if (firebaseToken) {
             signInWithCustomToken(auth, firebaseToken)
                 .then(async () => {
