@@ -22,7 +22,7 @@ frontend/node_modules
 .env.production.local
 
 # Firebase service account key
-backend/src/config/serviceAccountKey.json
+backend/src/api/serviceAccountKey.json
 
 npm-debug.log*
 yarn-debug.log*
