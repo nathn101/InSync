@@ -3,7 +3,7 @@ const config = {
         SPOTIFY_LOGIN_URL: 'http://localhost:5000/api/spotifylogin'
     },
     production: {
-        SPOTIFY_LOGIN_URL: 'https://insync-eight.vercel.app/api/spotifylogin'
+        SPOTIFY_LOGIN_URL: 'https://in-sync-iota.vercel.app/api/spotifylogin'
     }
 };
 
