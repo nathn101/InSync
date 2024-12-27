@@ -18,7 +18,7 @@ const SignIn = () => {
                 .then(async () => {
                     localStorage.setItem('token', await auth.currentUser.getIdToken());
                     window.dispatchEvent(new Event('storage')); // Trigger storage event to update Navbar
-                    history.push(`/profile`); // Redirect to profile with Spotify tokens
+                    history.push(`/profile`); // Redirect to profile with Spotify tokens also stored in cookies
                 })
                 .catch((error) => {
                     console.error('Error signing in with custom token:', error);
