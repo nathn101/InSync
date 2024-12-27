@@ -1,13 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, signInWithCustomToken } from 'firebase/auth';
 import { auth, facebookProvider, googleProvider } from '../firebase';
+import Cookies from 'js-cookie';
 
 const SignIn = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const history = useHistory();
+
+    useEffect(() => {  
+        const firebaseToken = Cookies.get('firebase_token');
+        const spotifyToken = Cookies.get('spotify_access_token');
+        const spotifyRefreshToken = Cookies.get('spotify_refresh_token');
+        if (firebaseToken) {
+            signInWithCustomToken(auth, firebaseToken)
+                .then(async () => {
+                    localStorage.setItem('token', await auth.currentUser.getIdToken());
+                    window.dispatchEvent(new Event('storage')); // Trigger storage event to update Navbar
+                    history.push(`/profile`); // Redirect to profile with Spotify tokens
+                })
+                .catch((error) => {
+                    console.error('Error signing in with custom token:', error);
+                    setErrorMessage('Error signing in with custom token');
+                });
+        }
+    }, [history]);
 
     const handleSignIn = async (e) => {
         e.preventDefault();
@@ -23,7 +42,7 @@ const SignIn = () => {
     };
 
     const handleSpotifyLogin = () => {
-        window.location.href = '/auth/spotify';
+        window.location.href = 'http://localhost:5000/api/spotifylogin';
     };
 
     const handleOAuthSignIn = async (provider) => {
@@ -36,6 +55,20 @@ const SignIn = () => {
         } catch (error) {
             console.error('Error with OAuth sign-in:', error);
             setErrorMessage('Error with OAuth sign-in');
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+            setErrorMessage('Please enter your email to reset password');
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setErrorMessage('Password reset link sent to your email');
+        } catch (error) {
+            console.error('Error sending password reset email:', error);
+            setErrorMessage('Error sending password reset email');
         }
     };
 
@@ -85,7 +118,11 @@ const SignIn = () => {
                     >
                         Login
                     </button>
-                    <p className="mt-2"><Link to="/ForgotPassword" className="text-green-500 hover:underline">Forgot Password?</Link></p>
+                    <p className="mt-2">
+                        <button type="button" onClick={handleForgotPassword} className="text-green-500 hover:underline">
+                            Forgot Password?
+                        </button>
+                    </p>
                 </form>
                 <div className="mt-6 flex justify-center gap-4 items-center">
                     <button onClick={handleSpotifyLogin} className="p-2 rounded bg-white hover:bg-gray-200 text-black w-12 h-12 flex items-center justify-center">

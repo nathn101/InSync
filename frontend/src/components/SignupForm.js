@@ -61,7 +61,7 @@ const SignUp = () => {
     };
 
     const handleSpotifyLogin = () => {
-        window.location.href = '/auth/spotify';
+        window.location.href = '/api/spotifylogin';
     }
 
     const handleOAuthSignIn = async (provider) => {

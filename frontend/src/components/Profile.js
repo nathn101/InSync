@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { FaGear } from "react-icons/fa6";
 import Cookies from 'js-cookie';
 
 const Profile = () => {
     const [showProfileForm, setShowProfileForm] = useState(false);
+    const [userData, setUserData] = useState({});
     const history = useHistory();
 
     const handleSignOut = () => {
-        localStorage.removeItem('token');
-        Cookies.remove('token'); // Remove the token cookie
+        Cookies.remove('firebase_token');
+        Cookies.remove('spotify_access_token');
+        Cookies.remove('spotify_refresh_token');
         window.dispatchEvent(new Event('signout')); // Dispatch custom signout event
         history.push('/Home');
     };
@@ -31,16 +33,55 @@ const Profile = () => {
         setShowProfileForm(!showProfileForm);
     };
 
+    const fetchSpotifyUserData = async () => {
+        var access_token = '';
+        try {
+            access_token = Cookies.get('spotify_access_token');
+
+        } catch (error) {
+            console.error('Error fetching Spotify auth token:', error);
+        }
+        
+        if (!access_token) {
+            console.error('Spotify auth token not found');
+            return;
+        }
+
+        try {
+            const response = await fetch('https://api.spotify.com/v1/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${access_token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch Spotify user data');
+            }
+
+            const data = await response.json();
+            setUserData(data);
+        } catch (error) {
+            console.error('Error fetching Spotify user data:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchSpotifyUserData();
+    }, []);
+
+    console.log(userData);
+
     return (
         <div className="relative flex justify-center items-center flex-grow bg-gradient-to-b from-black via-gray-900 to-green-900 min-h-screen">
             <div className="bg-gray-800 bg-opacity-50 p-6 pb-6 rounded-lg text-center text-white w-3/5 mb-16">
                 <div className="flex gap-4 items-center mb-6">
                     <img 
-                        src="https://via.placeholder.com/150" 
+                        src={userData.images?.[0]?.url}
                         alt="User Avatar" 
                         className="w-24 h-24 rounded-full"
                     />
-                    <h1 className="text-3xl">Username</h1>
+                    <h1 className="text-3xl">{userData.display_name}</h1>
                     <button 
                         onClick={toggleProfileForm} 
                         className="ml-auto p-2 rounded bg-gray-700 hover:bg-gray-600 text-white"
@@ -55,9 +96,9 @@ const Profile = () => {
                     </button>
                 </div>
                 {!showProfileForm && (
-                    <div className="flex w-full">
-                        <span><p>Followers: </p></span>
-                        <span><p>Following: </p></span>
+                    <div className="flex w-full gap-4">
+                        <span><h2>Followers: {userData.followers?.total}</h2></span>
+                        <span><h2>Following: </h2><h2></h2></span>
                     </div>
                 )}
                 {showProfileForm && (

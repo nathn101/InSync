@@ -71,7 +71,6 @@ const Home = () => {
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
@@ -102,17 +101,22 @@ const Home = () => {
     }, []);
 
     const handlePlayPause = async () => {
-        if (audioContextRef.current.state === 'suspended') {
-            await audioContextRef.current.resume();
-        }
-        if (!isPlaying) {
-            audioRef.current.play();
-            animationRef.current = requestAnimationFrame(draw);
+        if (audioRef.current.readyState >= 3) {
+            if (audioContextRef.current.state === 'suspended') {
+                await audioContextRef.current.resume();
+            }
+            if (!isPlaying) {
+                audioRef.current.play();
+                animationRef.current = requestAnimationFrame(draw);
+            } else {
+                audioRef.current.pause();
+                cancelAnimationFrame(animationRef.current);
+            }
+            setIsPlaying(!isPlaying);
         } else {
-            audioRef.current.pause();
-            cancelAnimationFrame(animationRef.current);
+            console.log('Audio is not fully loaded yet.');
         }
-        setIsPlaying(!isPlaying);
+        
     };
 
     const handleMuteUnmute = () => {
