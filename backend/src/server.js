@@ -14,6 +14,7 @@ const cookieParser = require('cookie-parser');
 const nodemailer = require('nodemailer'); // Import nodemailer
 const admin = require('firebase-admin'); // Import Firebase Admin SDK
 const serviceAccount = require('./config/serviceAccountKey.json'); // Path to your Firebase service account key
+const config = require('./config'); // Import config
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -217,7 +218,6 @@ app.get('/', (req, res) => {
 var stateKey = 'spotify_auth_state';
 var client_id = process.env.SPOTIFY_CLIENT_ID; // your clientId
 var client_secret = process.env.SPOTIFY_CLIENT_SECRET; // Your secret
-var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 
 app.get('/api/spotifylogin', function(req, res) {
     var state = generateRandomString(16);
@@ -230,7 +230,7 @@ app.get('/api/spotifylogin', function(req, res) {
         response_type: 'code',
         client_id: client_id,
         scope: scope,
-        redirect_uri: redirect_uri,
+        redirect_uri: config.redirectUri,
         state: state
       }));
 });
@@ -253,7 +253,7 @@ app.get('/callback', function(req, res) {
         url: 'https://accounts.spotify.com/api/token',
         form: {
           code: code,
-          redirect_uri: redirect_uri,
+          redirect_uri: config.redirectUri,
           grant_type: 'authorization_code'
         },
         headers: {
@@ -287,7 +287,7 @@ app.get('/callback', function(req, res) {
             res.cookie('spotify_refresh_token', refresh_token, { httpOnly: false });
 
             // redirect the user back to your application
-            res.redirect('http://localhost:3000/SignIn');
+            res.redirect(config.frontendUri);
           });
         } else {
           res.redirect('/#' +
