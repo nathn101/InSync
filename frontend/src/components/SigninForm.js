@@ -13,6 +13,7 @@ const SignIn = () => {
 
     useEffect(() => {  
         const firebaseToken = Cookies.get('firebase_token');
+        console.log('Firebase token:', firebaseToken);
         if (firebaseToken) {
             signInWithCustomToken(auth, firebaseToken)
                 .then(async () => {

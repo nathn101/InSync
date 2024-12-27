@@ -36,7 +36,7 @@ const Profile = () => {
     const fetchSpotifyUserData = async () => {
         var access_token = '';
         try {
-            console.log(Cookies.get());
+            console.log("Cookies", Cookies.get());
             access_token = Cookies.get('spotify_access_token');
         } catch (error) {
             console.error('Error fetching Spotify auth token:', error);

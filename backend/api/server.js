@@ -225,7 +225,7 @@ var client_secret = process.env.SPOTIFY_CLIENT_SECRET; // Your secret
 
 app.get('/api/spotifylogin', function(req, res) {
     var state = generateRandomString(16);
-    res.cookie(stateKey, state);
+    res.cookie(stateKey, state, {httpOnly: false, secure: true, sameSite: 'None'});
   
     // your application requests authorization
     var scope = 'user-read-private user-read-email';
@@ -286,9 +286,9 @@ app.get('/callback', function(req, res) {
             const firebaseToken = await admin.auth().createCustomToken(body.id);
 
             // Store tokens in cookies
-            res.cookie('firebase_token', firebaseToken, { httpOnly: false });
-            res.cookie('spotify_access_token', access_token, { httpOnly: false });
-            res.cookie('spotify_refresh_token', refresh_token, { httpOnly: false });
+            res.cookie('firebase_token', firebaseToken, { httpOnly: false, secure: true, sameSite: 'None' });
+            res.cookie('spotify_access_token', access_token, { httpOnly: false, secure: true, sameSite: 'None' });
+            res.cookie('spotify_refresh_token', refresh_token, { httpOnly: false, secure: true, sameSite: 'None' });
 
             // redirect the user back to your application
             res.redirect(config.frontendUri);
