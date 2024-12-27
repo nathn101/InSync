@@ -13,8 +13,8 @@ const cors = require('cors'); // Import the cors package
 const cookieParser = require('cookie-parser');
 const nodemailer = require('nodemailer'); // Import nodemailer
 const admin = require('firebase-admin'); // Import Firebase Admin SDK
-const serviceAccount = require('./config/serviceAccountKey.json'); // Path to your Firebase service account key
-const config = require('./config'); // Import config
+const serviceAccount = require('../config/serviceAccountKey.json'); // Path to your Firebase service account key
+const config = require('../config'); // Import config
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
