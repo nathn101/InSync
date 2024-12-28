@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { FaGear } from "react-icons/fa6";
 import Cookies from 'js-cookie';
+import config from '../context/config';
 
 const Profile = () => {
     const [showProfileForm, setShowProfileForm] = useState(false);
