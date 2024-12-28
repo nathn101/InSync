@@ -36,7 +36,7 @@ const Profile = () => {
     const fetchSpotifyUserData = async () => {
         console.log('Cookies:', Cookies.get());
         try {
-          const response = await fetch('http://localhost:5000/api/spotify-user-data', {
+          const response = await fetch(config.SPOTIFY_DATA_URL, {
             method: 'GET',
             credentials: 'include' // Include credentials (cookies)
           });
