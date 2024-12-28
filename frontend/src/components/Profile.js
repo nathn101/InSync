@@ -35,7 +35,7 @@ const Profile = () => {
     };
 
     const fetchSpotifyUserData = async () => {
-        console.log('Cookies:', Cookies.get());
+        console.log('Cookies:', document.cookie);
         try {
           const response = await fetch(config.SPOTIFY_DATA_URL, {
             method: 'GET',
