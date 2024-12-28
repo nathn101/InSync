@@ -28,20 +28,19 @@ const port = process.env.PORT || 5000;
 const allowedOrigins = ['http://localhost:3000', 'https://insync-eight.vercel.app'];
 
 // Enable CORS for all routes
-// app.use(cors({
-//     origin: (origin, callback) => {
-//         // Allow requests with no origin (like mobile apps or curl requests)
-//         if (!origin) return callback(null, true);
-//         if (allowedOrigins.indexOf(origin) === -1) {
-//             const msg = 'The CORS policy for this site does not allow access from the specified origin.';
-//             return callback(new Error(msg), false);
-//         }
-//         return callback(null, true);
-//     },
-//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-//     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
-// }));
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+}));
 
 // Middleware
 app.use(express.json());
@@ -329,4 +328,34 @@ app.get('/refresh_token', function(req, res) {
         });
       }
     });
+});
+
+// Proxy endpoint to fetch Spotify user data
+app.get('/api/spotify-user-data', (req, res) => {
+  console.log('Cookies:', req.cookies);
+  console.log("reached");
+  const accessToken = req.cookies.spotify_access_token;
+  console.log('Access token:', accessToken);
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Spotify access token not found' });
+  }
+
+  request.get('https://api.spotify.com/v1/me', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  }, (error, response, body) => {
+    if (error) {
+      console.error('Error fetching Spotify user data:', error);
+      return res.status(500).json({ error: 'Failed to fetch Spotify user data' });
+    }
+
+    try {
+      const data = JSON.parse(body);
+      res.status(response.statusCode).json(data);
+    } catch (parseError) {
+      console.error('Error parsing Spotify user data:', parseError);
+      res.status(500).json({ error: 'Failed to parse Spotify user data' });
+    }
+  });
 });

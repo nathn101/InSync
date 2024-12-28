@@ -34,35 +34,22 @@ const Profile = () => {
     };
 
     const fetchSpotifyUserData = async () => {
-        var access_token = '';
+        console.log('Cookies:', Cookies.get());
         try {
-            console.log("Cookies", Cookies.get());
-            access_token = Cookies.get('spotify_access_token');
+          const response = await fetch('http://localhost:5000/api/spotify-user-data', {
+            method: 'GET',
+            credentials: 'include' // Include credentials (cookies)
+          });
+          console.log(response);
+          if (!response.ok) {
+            throw new Error('Failed to fetch Spotify user data');
+          }
+          
+          const data = await response.json();
+          console.log('Spotify user data:', data);
+          setUserData(data);
         } catch (error) {
-            console.error('Error fetching Spotify auth token:', error);
-        }
-        
-        if (!access_token) {
-            console.error('Spotify auth token not found');
-            return;
-        }
-
-        try {
-            const response = await fetch('https://api.spotify.com/v1/me', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${access_token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch Spotify user data');
-            }
-
-            const data = await response.json();
-            setUserData(data);
-        } catch (error) {
-            console.error('Error fetching Spotify user data:', error);
+          console.error('Error fetching Spotify user data:', error);
         }
     };
 
