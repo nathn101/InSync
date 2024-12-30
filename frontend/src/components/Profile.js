@@ -107,7 +107,7 @@ const Profile = () => {
 
     return (
         <div className="relative flex justify-center items-center flex-grow bg-gradient-to-b from-black via-gray-900 to-green-900 min-h-screen">
-            <div className="bg-gray-800 bg-opacity-50 p-6 pb-6 rounded-lg text-center text-white w-3/5 mb-16">
+            <div className="bg-gray-800 bg-opacity-50 p-6 pb-6 rounded-lg text-center text-white w-3/5 mt-14 mb-8">
                 <div className="flex gap-4 items-center mb-6">
                     <img 
                         src={hasSpotifyAccount? userData.images?.[0]?.url : 'https://via.placeholder.com/150'}

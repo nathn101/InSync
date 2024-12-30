@@ -6,6 +6,7 @@ const Home = () => {
     const audioRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
     const animationRef = useRef(null);
     const audioContextRef = useRef(null);
     const analyserRef = useRef(null);
@@ -87,6 +88,11 @@ const Home = () => {
         audio.volume = 0.008;
         audio.playbackRate = 0.75; // Slow down the music
         audio.loop = true; // Repeat the audio
+        audio.preload = 'auto'; // Preload the audio
+
+        audio.addEventListener('canplaythrough', () => {
+            setIsLoaded(true);
+        });
 
         audioRef.current = audio;
         const source = audioContext.createMediaElementSource(audio);
@@ -101,7 +107,7 @@ const Home = () => {
     }, []);
 
     const handlePlayPause = async () => {
-        if (audioRef.current.readyState >= 3) {
+        if (isLoaded) {
             if (audioContextRef.current.state === 'suspended') {
                 await audioContextRef.current.resume();
             }
@@ -116,7 +122,6 @@ const Home = () => {
         } else {
             console.log('Audio is not fully loaded yet.');
         }
-        
     };
 
     const handleMuteUnmute = () => {
@@ -135,6 +140,7 @@ const Home = () => {
                 <button 
                     onClick={handlePlayPause} 
                     className="text-white p-4 flex items-center justify-center"
+                    disabled={!isLoaded}
                 >
                     {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} />}
                 </button>
