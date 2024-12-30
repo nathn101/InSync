@@ -228,7 +228,7 @@ app.get('/api/spotifylogin', function(req, res) {
     res.cookie(stateKey, state, {httpOnly: false, secure: true, sameSite: 'None'});
   
     // your application requests authorization
-    var scope = 'user-read-private user-read-email';
+    var scope = 'user-read-private user-read-email user-top-read user-follow-read';
     res.redirect('https://accounts.spotify.com/authorize?' +
       queryString.stringify({
         response_type: 'code',
@@ -332,10 +332,7 @@ app.get('/refresh_token', function(req, res) {
 
 // Proxy endpoint to fetch Spotify user data
 app.get('/api/spotify-user-data', (req, res) => {
-  console.log('Cookies:', req.cookies);
-  console.log("reached");
   const accessToken = req.cookies.spotify_access_token;
-  console.log('Access token:', accessToken);
   if (!accessToken) {
     return res.status(401).json({ error: 'Spotify access token not found' });
   }
@@ -359,3 +356,57 @@ app.get('/api/spotify-user-data', (req, res) => {
     }
   });
 });
+
+// Proxy endpoint to fetch Spotify top artists
+app.get('/api/spotify-top-artists', (req, res) => {
+  const accessToken = req.cookies.spotify_access_token;
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Spotify access token not found' });
+  }
+  request.get('https://api.spotify.com/v1/me/top/artists?time_range=short_term', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  }, (error, response, body) => {
+    if (error) {
+      console.error('Error fetching top artists:', error);
+      return res.status(500).json({ error: 'Failed to fetch top artists' });
+    }
+    // console.log("Top Artists: ", body);
+    try {
+      const data = JSON.parse(body);
+      // console.log("Top Artists Data: ", data);
+      res.status(response.statusCode).json(data);
+    } catch (parseError) {
+      console.error('Error parsing top artists:', parseError);
+      res.status(500).json({ error: 'Failed to parse top artists' });
+    }
+  });
+});
+
+// Proxy endpoint to fetch Spotify top tracks
+app.get('/api/spotify-top-tracks', (req, res) => {
+  const accessToken = req.cookies.spotify_access_token;
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Spotify access token not found' });
+  }
+  request.get('https://api.spotify.com/v1/me/top/tracks?time_range=short_term', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  }, (error, response, body) => {
+    if (error) {
+      console.error('Error fetching top tracks:', error);
+      return res.status(500).json({ error: 'Failed to fetch top tracks' });
+    }
+    try {
+      const data = JSON.parse(body);
+      console.log("Top Tracks Data: ", data);
+      res.status(response.statusCode).json(data);
+    } catch (parseError) {
+      console.error('Error parsing top tracks:', parseError);
+      res.status(500).json({ error: 'Failed to parse top tracks' });
+    }
+  });
+});
+

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Cookies from 'js-cookie'; // Import js-cookie to handle cookies
 
 const Navbar = () => {
-    const [isSignedIn, setIsSignedIn] = useState(!!localStorage.getItem('token') || !!Cookies.get('token'));
+    const [isSignedIn, setIsSignedIn] = useState(false);
     const history = useHistory();
 
     useEffect(() => {
@@ -24,7 +24,7 @@ const Navbar = () => {
 
     return (
         <nav className="absolute top-0 left-0 w-full flex justify-between items-center bg-black p-4 z-50">
-            <a href="/" className="text-green-500 text-3xl no-underline">InSync</a>
+            <Link to="/" className="text-green-500 text-3xl no-underline">InSync</Link>
             <div className="flex gap-4">
                 <Link className="text-white no-underline text-base hover:text-green-500 hover:underline-animation" to="/">Home</Link>
                 <Link className="text-white no-underline text-base hover:text-green-500 hover:underline-animation" to="/About">About</Link>

@@ -3,10 +3,14 @@ import { useHistory } from 'react-router-dom';
 import { FaGear } from "react-icons/fa6";
 import Cookies from 'js-cookie';
 import config from '../context/config';
+import { set } from 'mongoose';
 
 const Profile = () => {
+    const [hasSpotifyAccount, setHasSpotifyAccount] = useState(false);
     const [showProfileForm, setShowProfileForm] = useState(false);
     const [userData, setUserData] = useState({});
+    const [topArtists, setTopArtists] = useState([]);
+    const [topTracks, setTopTracks] = useState([]);
     const history = useHistory();
 
     const handleSignOut = () => {
@@ -35,27 +39,68 @@ const Profile = () => {
     };
 
     const fetchSpotifyUserData = async () => {
-        console.log('Cookies:', document.cookie);
         try {
           const response = await fetch(config.SPOTIFY_DATA_URL, {
             method: 'GET',
             credentials: 'include' // Include credentials (cookies)
           });
-          console.log(response);
           if (!response.ok) {
             throw new Error('Failed to fetch Spotify user data');
           }
           
           const data = await response.json();
-          console.log('Spotify user data:', data);
+          console.log("user data: ", data);
           setUserData(data);
+          if (Object.keys(data).length > 0) {
+            setHasSpotifyAccount(true);
+          }
         } catch (error) {
           console.error('Error fetching Spotify user data:', error);
         }
     };
 
+    const fetchTopArtists = async () => {
+        try {
+            const response = await fetch(config.SPOTIFY_TOP_ARTISTS_URL, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            console.log(response);
+            if (!response.ok) {
+                throw new Error('Failed to fetch top artists');
+            }
+
+            const data = await response.json();
+            setTopArtists(data.items);
+            // console.log("Top Artists:", topArtists);
+        } catch (error) {
+            console.error('Error fetching top artists:', error);
+        }
+    }; 
+
+    const fetchTopTracks = async () => {
+        try {
+            const response = await fetch(config.SPOTIFY_TOP_TRACKS_URL, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            console.log(response);
+            if (!response.ok) {
+                throw new Error('Failed to fetch top tracks');
+            }
+
+            const data = await response.json();
+            setTopTracks(data.items);
+            console.log("Top Tracks:", topTracks);
+        } catch (error) {
+            console.error('Error fetching top tracks:', error);
+        }
+    };
+
     useEffect(() => {
         fetchSpotifyUserData();
+        fetchTopArtists();
+        fetchTopTracks();
     }, []);
 
     console.log(userData);
@@ -65,7 +110,7 @@ const Profile = () => {
             <div className="bg-gray-800 bg-opacity-50 p-6 pb-6 rounded-lg text-center text-white w-3/5 mb-16">
                 <div className="flex gap-4 items-center mb-6">
                     <img 
-                        src={userData.images?.[0]?.url}
+                        src={hasSpotifyAccount? userData.images?.[0]?.url : 'https://via.placeholder.com/150'}
                         alt="User Avatar" 
                         className="w-24 h-24 rounded-full"
                     />
@@ -84,9 +129,33 @@ const Profile = () => {
                     </button>
                 </div>
                 {!showProfileForm && (
-                    <div className="flex w-full gap-4">
-                        <span><h2>Followers: {userData.followers?.total}</h2></span>
-                        <span><h2>Following: </h2><h2></h2></span>
+                    <div className="flex flex-col w-full gap-4">
+                        <div className="flex w-full gap-4">
+                            <div className="flex w-full gap-4">
+                                <span><h2>Followers: {hasSpotifyAccount ? userData.followers?.total : 0}</h2></span>
+                            </div>
+                        </div>
+                        <h2 className="flex justify-start">Top Artists: </h2>
+                        <div className="flex w-full gap-4">
+                            {hasSpotifyAccount ? topArtists.slice(0, 5).map((artist) => (
+                                <div className="flex flex-col items-center">
+                                    <img 
+                                        src={artist.images?.[0]?.url}
+                                        alt="Artist Avatar" 
+                                        className="w-16 h-16 rounded-full"
+                                    />
+                                    <h3>{artist.name}</h3>
+                                </div>
+                            )) : <p className="flex w-full items-center justify-center">You have not connected your Spotify account yet.</p>}
+                        </div>
+                        <h2 className="flex justify-start">Top Tracks: </h2>
+                        <div className="flex w-full">
+                            <ul className="flex flex-col align-top text-left">
+                                {hasSpotifyAccount ? topTracks.slice(0, 5).map((track, index) => (
+                                    <li className="flex w-full gap-2 m-0">{index + 1}. <div className="flex flex-col"><span className="text-xl">{track.name}</span><span className="text-s">{track.artists[0].name}</span></div><div>{track.album?.name}</div></li>
+                                )) : <p className="flex w-full items-start justify-start">You have not connected your Spotify account yet.</p>}
+                            </ul>
+                        </div>
                     </div>
                 )}
                 {showProfileForm && (
