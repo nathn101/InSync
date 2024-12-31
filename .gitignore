@@ -23,6 +23,7 @@ frontend/node_modules
 
 # Firebase service account key
 backend/api/serviceAccountKey.json
+backend/api/app.log
 
 npm-debug.log*
 yarn-debug.log*
