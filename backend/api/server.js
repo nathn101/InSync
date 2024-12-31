@@ -280,6 +280,14 @@ app.get('/callback', function(req, res) {
   
           // use the access token to access the Spotify Web API
           request.get(options, async function(error, response, body) {
+            if (error) {
+              console.error('Error fetching Spotify user data:', error);
+              return res.redirect('/#' +
+                queryString.stringify({
+                  error: 'invalid_token'
+                }));
+            }
+
             console.log("Spotify Request Body: ", body);
 
             // Create a Firebase custom token
@@ -294,6 +302,7 @@ app.get('/callback', function(req, res) {
             res.redirect(config.frontendUri);
           });
         } else {
+          console.error('Error during token exchange:', error);
           res.redirect('/#' +
             queryString.stringify({
               error: 'invalid_token'

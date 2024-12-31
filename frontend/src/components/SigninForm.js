@@ -112,7 +112,8 @@ const SignIn = () => {
                     </div>
                     {errorMessage && <p className="text-red-500">{errorMessage}</p>}
                     <button 
-                        type="submit" 
+                        type="submit"
+                        onClick={handleSignIn}
                         className={`btn w-full p-2 rounded ${isFormValid ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 cursor-not-allowed'} text-white`}
                         disabled={!isFormValid}
                     >
