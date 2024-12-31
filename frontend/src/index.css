@@ -21,3 +21,39 @@ html, body {
 .hover\:underline-animation:hover::after {
     width: 100%;
 }
+
+@media (max-width: 768px) {
+    .text-4xl {
+        font-size: 2rem;
+    }
+    .text-xl {
+        font-size: 1.25rem;
+    }
+    .text-lg {
+        font-size: 1rem;
+    }
+    .text-base {
+        font-size: 0.875rem;
+    }
+    .p-16 {
+        padding: 2rem;
+    }
+    .p-8 {
+        padding: 1rem;
+    }
+    .p-4 {
+        padding: 0.5rem;
+    }
+    .mb-4 {
+        margin-bottom: 1rem;
+    }
+    .mb-2 {
+        margin-bottom: 0.5rem;
+    }
+    .space-x-4 {
+        gap: 1rem;
+    }
+    .space-x-2 {
+        gap: 0.5rem;
+    }
+}

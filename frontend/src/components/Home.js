@@ -112,8 +112,12 @@ const Home = () => {
                 await audioContextRef.current.resume();
             }
             if (!isPlaying) {
-                audioRef.current.play();
-                animationRef.current = requestAnimationFrame(draw);
+                try {
+                    await audioRef.current.play();
+                    animationRef.current = requestAnimationFrame(draw);
+                } catch (error) {
+                    console.error('Error playing audio:', error);
+                }
             } else {
                 audioRef.current.pause();
                 cancelAnimationFrame(animationRef.current);
@@ -132,23 +136,23 @@ const Home = () => {
     return (
         <div className="relative flex justify-center items-center flex-grow bg-gradient-to-b from-black via-gray-900 to-green-900 min-h-screen">
             <canvas ref={canvasRef} className="absolute inset-0 w-full h-full"></canvas>
-            <div className="relative bg-opacity-50 p-16 rounded-lg text-center text-white max-w-4xl w-full">
-                <h1 className="text-4xl mb-4">Welcome to <span className="text-green-500">InSync</span></h1>
-                <p className="text-xl">Your personalized music circle</p>
+            <div className="relative bg-opacity-50 p-8 md:p-16 rounded-lg text-center text-white max-w-4xl w-full">
+                <h1 className="text-2xl md:text-4xl mb-2 md:mb-4">Welcome to <span className="text-green-500">InSync</span></h1>
+                <p className="text-lg md:text-xl">Your personalized music circle</p>
             </div>
-            <div className="absolute bottom-4 left-2 flex space-x-4">
+            <div className="absolute bottom-4 left-2 flex space-x-2 md:space-x-4">
                 <button 
                     onClick={handlePlayPause} 
-                    className="text-white p-4 flex items-center justify-center"
+                    className="text-white p-2 md:p-4 flex items-center justify-center"
                     disabled={!isLoaded}
                 >
-                    {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} />}
+                    {isPlaying ? <FaPause className="w-4 h-4 md:w-5 md:h-5" /> : <FaPlay className="w-4 h-4 md:w-5 md:h-5" />}
                 </button>
                 <button 
                     onClick={handleMuteUnmute} 
-                    className="text-white p-4 flex items-center justify-center"
+                    className="text-white p-2 md:p-4 flex items-center justify-center"
                 >
-                    {isMuted ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
+                    {isMuted ? <FaVolumeMute className="w-4 h-4 md:w-5 md:h-5" /> : <FaVolumeUp className="w-4 h-4 md:w-5 md:h-5" />}
                 </button>
             </div>
         </div>
