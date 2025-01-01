@@ -1,11 +1,11 @@
 const config = {
     development: {
         redirectUri: 'http://localhost:8888/callback',
-        frontendUri: 'http://localhost:3000/SignIn',
+        frontendUri: 'http://localhost:3000/profile',
     },
     production: {
         redirectUri: 'https://in-sync-iota.vercel.app/callback',
-        frontendUri: 'https://insync-eight.vercel.app/SignIn',
+        frontendUri: 'https://insync-eight.vercel.app/profile',
     }
 };
 

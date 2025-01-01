@@ -41,7 +41,7 @@ admin.initializeApp({
 const app = express();
 const port = process.env.PORT || 5000;
 
-const allowedOrigins = ['http://localhost:3000', 'https://insync-eight.vercel.app'];
+const allowedOrigins = ['http://localhost:3000', 'https://insync-eight.vercel.app', 'https://in-sync-iota.vercel.app'];
 
 // Enable CORS for all routes
 app.use(cors({
