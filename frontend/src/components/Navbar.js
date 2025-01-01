@@ -7,15 +7,23 @@ const Navbar = () => {
     const history = useHistory();
 
     useEffect(() => {
-        const handleStorageChange = () => {
+        const checkAuth = () => {
             setIsSignedIn(!!localStorage.getItem('token') || !!Cookies.get('firebase_token'));
+        };
+
+        checkAuth();
+
+        const handleStorageChange = () => {
+            checkAuth();
         };
 
         const handleSignOutEvent = () => {
             setIsSignedIn(false);
-        }
+        };
+
         window.addEventListener('signout', handleSignOutEvent);
         window.addEventListener('storage', handleStorageChange);
+
         return () => {
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('signout', handleSignOutEvent);
