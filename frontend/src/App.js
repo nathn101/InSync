@@ -8,13 +8,14 @@ import SignUp from './components/SignupForm';
 import ForgotPassword from './components/ForgotPassword';
 import Dashboard from './components/Dashboard';
 import About from './components/About';
+import Cookies from 'js-cookie';
 import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-dom';
 
 const PrivateRoute = ({ component: Component, ...rest }) => (
     <Route
         {...rest}
         render={props =>
-            localStorage.getItem('token') ? (
+            localStorage.getItem('token') || Cookies.get('firebase_token') ? (
                 <Component {...props} />
             ) : (
                 <Redirect to="/SignIn" />
