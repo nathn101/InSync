@@ -8,7 +8,7 @@ const Navbar = () => {
 
     useEffect(() => {
         const handleStorageChange = () => {
-            setIsSignedIn(!!localStorage.getItem('token'));
+            setIsSignedIn(!!localStorage.getItem('token') || !!Cookies.get('firebase_token'));
         };
 
         const handleSignOutEvent = () => {
