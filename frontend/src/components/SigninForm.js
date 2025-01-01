@@ -43,7 +43,6 @@ const SignIn = () => {
     const handleSpotifyLogin = () => {
         console.log(config.SPOTIFY_LOGIN_URL);
         window.location.href = config.SPOTIFY_LOGIN_URL;
-        history.push('/profile');
     };
 
     const handleOAuthSignIn = async (provider) => {

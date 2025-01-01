@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, facebookProvider } from '../firebase';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import config from '../context/config';
 
 const SignUp = () => {
     const [email, setEmail] = useState('');
@@ -61,7 +62,8 @@ const SignUp = () => {
     };
 
     const handleSpotifyLogin = () => {
-        window.location.href = '/api/spotifylogin';
+        console.log(config.SPOTIFY_LOGIN_URL);
+        window.location.href = config.SPOTIFY_LOGIN_URL;
     }
 
     const handleOAuthSignIn = async (provider) => {
