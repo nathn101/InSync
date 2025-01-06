@@ -37,7 +37,6 @@ const logger = winston.createLogger({
 });
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-// logger.info(`service account: ${JSON.stringify(serviceAccount)}`);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -93,6 +92,7 @@ app.use(express.static(path.join(__dirname, '../frontend/build')));
 
 // Serve static files from the public directory
 // Music from #Uppbeat (free for Creators!):
+// https://uppbeat.io/t/adi-goldstein/i-dont-need-your-love
 // https://uppbeat.io/t/adi-goldstein/i-dont-need-your-love
 // License code: O7PW0MDMVUDSBKIO
 app.use('/audio', express.static(path.join(__dirname, '../frontend/public/audio')));
@@ -167,7 +167,7 @@ app.get('/callback', async function(req, res) {
             logger.error('Error fetching Spotify user data:', error);
             return res.redirect('/signin?error=invalid_token');
           }
-          logger.info(`Spotify User Data: ${JSON.stringify(body)}`);
+          // logger.info(`Spotify User Data: ${JSON.stringify(body)}`);
           
           // Check if user already exists in the database
           let user = await User.findOne({ spotifyId: body.id });
@@ -183,7 +183,7 @@ app.get('/callback', async function(req, res) {
           }
 
           // Create a Firebase custom token
-          logger.info(`Creating Firebase custom token for user: ${body.id}`);
+          // logger.info(`Creating Firebase custom token for user: ${body.id}`);
           const firebaseToken = await admin.auth().createCustomToken(body.id);
           res.cookie('firebase_token', firebaseToken, { httpOnly: false, secure: true, sameSite: 'None' });
 

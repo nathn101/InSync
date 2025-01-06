@@ -1,9 +1,9 @@
 const buildUserItemMatrix = require('./userItemMatrix');
 
 const calculateSimilarity = (user1, user2) => {
-  console.log("user1: ", user1);
+//   console.log("user1: ", user1);
   const commonItems = Object.keys(user1).filter(item => user2.hasOwnProperty(item));
-  console.log("common items: ", commonItems);
+//   console.log("common items: ", commonItems);
   if (commonItems.length === 0) return 0;
 
   const user1Ratings = commonItems.map(item => user1[item]);
@@ -18,15 +18,15 @@ const calculateSimilarity = (user1, user2) => {
 
 const getRecommendations = async (userId) => {
   const userItemMatrix = await buildUserItemMatrix();
-  console.log("userItemMatrix: ", userItemMatrix);
-  console.log("userId: ", userId);
+//   console.log("userItemMatrix: ", userItemMatrix);
+//   console.log("userId: ", userId);
   const targetUser = userItemMatrix[userId];
-  console.log("targetUser: ", targetUser);
+//   console.log("targetUser: ", targetUser);
   if (!targetUser) return [];
 
   const similarities = {};
   for (const otherUserId in userItemMatrix) {
-    console.log(otherUserId);
+    // console.log(otherUserId);
     if (otherUserId !== userId) {
       const similarity = calculateSimilarity(targetUser, userItemMatrix[otherUserId]);
       similarities[otherUserId] = similarity;
