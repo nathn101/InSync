@@ -134,10 +134,7 @@ app.get('/callback', async function(req, res) {
   var storedState = req.cookies ? req.cookies[stateKey] : null;
 
   if (state === null || state !== storedState) {
-    return res.redirect('/#' +
-      queryString.stringify({
-        error: 'state_mismatch'
-      }));
+    return res.redirect('/signin?error=state_mismatch');
   } else {
     res.clearCookie(stateKey);
     var authOptions = {
@@ -148,7 +145,7 @@ app.get('/callback', async function(req, res) {
         grant_type: 'authorization_code'
       },
       headers: {
-        'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64'))
+        'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base64'))
       },
       json: true
     };
@@ -168,10 +165,7 @@ app.get('/callback', async function(req, res) {
         request.get(options, async function(error, response, body) {
           if (error) {
             logger.error('Error fetching Spotify user data:', error);
-            return res.redirect('/#' +
-              queryString.stringify({
-                error: 'invalid_token'
-              }));
+            return res.redirect('/signin?error=invalid_token');
           }
           logger.info(`Spotify User Data: ${JSON.stringify(body)}`);
           
@@ -203,10 +197,7 @@ app.get('/callback', async function(req, res) {
           request.get(topTracksOptions, async function(error, response, topTracksBody) {
             if (error) {
               logger.error(`Error fetching Spotify top tracks: ${error}`);
-              return res.redirect('/#' +
-                queryString.stringify({
-                  error: 'invalid_token'
-                }));
+              return res.redirect('/signin?error=invalid_token');
             }
 
             // logger.info(`Spotify Top Tracks: ${JSON.stringify(topTracksBody)}`);
@@ -231,10 +222,7 @@ app.get('/callback', async function(req, res) {
             request.get(savedTracksOptions, async function(error, response, savedTracksBody) {
               if (error) {
                 logger.error(`Error fetching Spotify saved tracks: ${error}`);
-                return res.redirect('/#' +
-                  queryString.stringify({
-                    error: 'invalid_token'
-                  }));
+                return res.redirect('/signin?error=invalid_token');
               }
 
               // logger.info(`Spotify Saved Tracks: ${JSON.stringify(savedTracksBody)}`);
@@ -258,10 +246,7 @@ app.get('/callback', async function(req, res) {
         });
       } else {
         logger.error(`Error during token exchange: ${error}`);
-        res.redirect('/#' +
-          queryString.stringify({
-            error: 'invalid_token'
-          }));
+        res.redirect('/signin?error=invalid_token');
       }
     });
   }
@@ -273,7 +258,7 @@ app.get('/refresh_token', function(req, res) {
       url: 'https://accounts.spotify.com/api/token',
       headers: { 
         'content-type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + (new Buffer.from(client_id + ':' + client_secret).toString('base64')) 
+        'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base64')) 
       },
       form: {
         grant_type: 'refresh_token',
