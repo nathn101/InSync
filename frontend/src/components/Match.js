@@ -1,31 +1,46 @@
 import { useState, useEffect } from 'react';
-import Matches from './matches';
-import useFetch from '../useFetch';
+import config from '../context/config';
+import Cookies from 'js-cookie';
 
 const Match = () => {
-    const { data, isLoading, error } = useFetch('http://localhost:8000/matches');
+    const [recommendations, setRecommendations] = useState([]);
+    const [error, setError] = useState(null);
 
+    const fetchRecommendations = async () => {
+        const userId = Cookies.get('spotify_id'); // Assuming the user ID is stored in the firebase_token cookie
+        try {
+            const response = await fetch(`${config.RECOMMENDATIONS_URL}/${userId}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch recommendations');
+            }
+            const data = await response.json();
+            setRecommendations(data);
+        } catch (error) {
+            setError(error.message);
+        }
+    };
+
+    useEffect(() => {
+        fetchRecommendations();
+    }, []);
+    console.log("recommendations: ", recommendations);
     return (
-        <div className="relative flex justify-center items-center flex-grow bg-gradient-to-b from-black via-gray-900 to-green-900 min-h-screen">
-            <div className="bg-gray-800 bg-opacity-50 p-8 rounded-lg text-center text-white max-w-4xl w-full">
-                <h1 className="text-3xl mb-6">Find Your Match</h1>
-                {error && <div className="text-red-500">{error}</div>}
-                {isLoading && <div className="text-white">Loading...</div>}
-                {data && (
-                    <div className="space-y-4">
-                        {data.map((match) => (
-                            <div key={match.id} className="bg-gray-800 p-4 rounded-lg">
-                                <h2 className="text-2xl mb-2">{match.name}</h2>
-                                <p className="text-lg">Top Genre: {match.topGenre}</p>
-                                <p className="text-lg">Top Artist: {match.topArtist}</p>
-                                <button className="btn mt-4 p-2 rounded bg-green-500 hover:bg-green-600 text-white">Connect</button>
-                            </div>
-                        ))}
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-gray-900 to-green-900 text-white">
+            <h1 className="text-4xl mb-8">Recommended Users</h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {recommendations.map((recommendation, index) => (
+                    <div key={index} className="bg-gray-800 p-6 rounded-lg text-center">
+                        <h2 className="text-2xl mb-4">{recommendation.displayName}</h2>
+                        <p>{recommendation.email}</p>
+                        <p>{recommendation.trackName}</p>
                     </div>
-                )}
+                ))}
             </div>
         </div>
     );
-}
+};
 
 export default Match;

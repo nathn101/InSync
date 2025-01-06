@@ -50,6 +50,7 @@ const Profile = () => {
           
           const data = await response.json();
           console.log("user data: ", data);
+          Cookies.set('spotify_id', data.id);
           setUserData(data);
           if (Object.keys(data).length > 0) {
             setHasSpotifyAccount(true);

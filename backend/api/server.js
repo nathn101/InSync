@@ -16,23 +16,28 @@ const admin = require('firebase-admin'); // Import Firebase Admin SDK
 const config = require('../src/config.js'); // Import config
 const winston = require('winston'); // Import winston
 
+const User = require('../src/config/User');
+const UserTrack = require('../src/config/UserTrack');
+const buildUserItemMatrix = require('../src/utils/userItemMatrix');
+const getRecommendations = require('../src/utils/collaborativeFiltering');
+
 // Configure winston
 const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.printf(({ timestamp, level, message }) => {
-            return `${timestamp} [${level}]: ${message}`;
-        })
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'app.log' })
-    ]
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(({ timestamp, level, message }) => {
+      return `${timestamp} [${level}]: ${message}`;
+    })
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'app.log' })
+  ]
 });
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-logger.info("service account: ", serviceAccount);
+// logger.info(`service account: ${JSON.stringify(serviceAccount)}`);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -68,15 +73,8 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
     logger.info('Connected to MongoDB');
 })
 .catch((err) => {
-    logger.error('Error connecting to MongoDB:', err);
+    logger.error(`Error connecting to MongoDB: ${err}`);
 });
-
-const userSchema = new mongoose.Schema({
-    email: String,
-    password: String,
-});
-
-const User = mongoose.model('User', userSchema);
 
 const generateRandomString = (length) => {
     return crypto
@@ -118,7 +116,7 @@ app.get('/api/spotifylogin', function(req, res) {
     res.cookie(stateKey, state, {httpOnly: false, secure: true, sameSite: 'None'});
   
     // your application requests authorization
-    var scope = 'user-read-private user-read-email user-top-read user-follow-read';
+    var scope = 'user-read-private user-read-email user-top-read user-follow-read user-library-read';
     res.redirect('https://accounts.spotify.com/authorize?' +
       queryString.stringify({
         response_type: 'code',
@@ -129,79 +127,144 @@ app.get('/api/spotifylogin', function(req, res) {
       }));
 });
   
-app.get('/callback', function(req, res) {
-    logger.info('Callback endpoint hit'); // Add console log message
+app.get('/callback', async function(req, res) {
+  logger.info('Callback Endpoint Hit');
+  var code = req.query.code || null;
+  var state = req.query.state || null;
+  var storedState = req.cookies ? req.cookies[stateKey] : null;
 
-    // your application requests refresh and access tokens
-    // after checking the state parameter
-    var code = req.query.code || null;
-    var state = req.query.state || null;
-    var storedState = req.cookies ? req.cookies[stateKey] : null;
-  
-    if (state === null || state !== storedState) {
-      res.redirect('/#' +
-        queryString.stringify({
-          error: 'state_mismatch'
-        }));
-    } else {
-      res.clearCookie(stateKey);
-      var authOptions = {
-        url: 'https://accounts.spotify.com/api/token',
-        form: {
-          code: code,
-          redirect_uri: config.redirectUri,
-          grant_type: 'authorization_code'
-        },
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded',
-          Authorization: 'Basic ' + (new Buffer.from(client_id + ':' + client_secret).toString('base64'))
-        },
-        json: true
-      };
-  
-      request.post(authOptions, async function(error, response, body) {
-        if (!error && response.statusCode === 200) {
-          var access_token = body.access_token,
-              refresh_token = body.refresh_token;
-  
-          var options = {
+  if (state === null || state !== storedState) {
+    return res.redirect('/#' +
+      queryString.stringify({
+        error: 'state_mismatch'
+      }));
+  } else {
+    res.clearCookie(stateKey);
+    var authOptions = {
+      url: 'https://accounts.spotify.com/api/token',
+      form: {
+        code: code,
+        redirect_uri: config.redirectUri,
+        grant_type: 'authorization_code'
+      },
+      headers: {
+        'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64'))
+      },
+      json: true
+    };
+
+    request.post(authOptions, async function(error, response, body) {
+      if (!error && response.statusCode === 200) {
+        var access_token = body.access_token,
+            refresh_token = body.refresh_token;
+
+        var options = {
             url: 'https://api.spotify.com/v1/me',
             headers: { 'Authorization': 'Bearer ' + access_token },
             json: true
+        };
+
+        // use the access token to access the Spotify Web API
+        request.get(options, async function(error, response, body) {
+          if (error) {
+            logger.error('Error fetching Spotify user data:', error);
+            return res.redirect('/#' +
+              queryString.stringify({
+                error: 'invalid_token'
+              }));
+          }
+          logger.info(`Spotify User Data: ${JSON.stringify(body)}`);
+          
+          // Check if user already exists in the database
+          let user = await User.findOne({ spotifyId: body.id });
+          if (!user) {
+            // Create a new user if not found
+            user = new User({
+              spotifyId: body.id,
+              displayName: body.display_name,
+              email: body.email,
+              images: body.images
+            });
+            await user.save();
+          }
+
+          // Create a Firebase custom token
+          logger.info(`Creating Firebase custom token for user: ${body.id}`);
+          const firebaseToken = await admin.auth().createCustomToken(body.id);
+          res.cookie('firebase_token', firebaseToken, { httpOnly: false, secure: true, sameSite: 'None' });
+
+          // Fetch user's top tracks
+          const topTracksOptions = {
+            url: 'https://api.spotify.com/v1/me/top/tracks?time_range=short_term',
+            headers: { 'Authorization': 'Bearer ' + access_token },
+            json: true
           };
-  
-          // use the access token to access the Spotify Web API
-          request.get(options, async function(error, response, body) {
+
+          request.get(topTracksOptions, async function(error, response, topTracksBody) {
             if (error) {
-              logger.error('Error fetching Spotify user data:', error);
+              logger.error(`Error fetching Spotify top tracks: ${error}`);
               return res.redirect('/#' +
                 queryString.stringify({
                   error: 'invalid_token'
                 }));
             }
 
-            logger.info("Spotify Request Body: ", body);
+            // logger.info(`Spotify Top Tracks: ${JSON.stringify(topTracksBody)}`);
 
-            // Create a Firebase custom token
-            const firebaseToken = await admin.auth().createCustomToken(body.id);
+            // Store user-track interactions in the database
+            for (const track of topTracksBody.items) {
+              console.log('userTrack ids: ', user._id, user.spotifyId);
+              await UserTrack.findOneAndUpdate(
+                { userId: user.spotifyId, trackId: track.id },
+                { $inc: { playCount: 1 }, $set: { trackName: track.name } }, // Include trackName
+                { upsert: true, new: true }
+              );
+            }
 
-            // Store tokens in cookies
-            res.cookie('firebase_token', firebaseToken, { httpOnly: false, secure: true, sameSite: 'None' });
-            res.cookie('spotify_access_token', access_token, { httpOnly: false, secure: true, sameSite: 'None' });
-            res.cookie('spotify_refresh_token', refresh_token, { httpOnly: false, secure: true, sameSite: 'None' });
+            // Fetch user's saved tracks
+            const savedTracksOptions = {
+              url: 'https://api.spotify.com/v1/me/tracks?limit=30',
+              headers: { 'Authorization': 'Bearer ' + access_token },
+              json: true
+            };
 
-            // redirect the user back to your application
-            res.redirect(config.frontendUri);
+            request.get(savedTracksOptions, async function(error, response, savedTracksBody) {
+              if (error) {
+                logger.error(`Error fetching Spotify saved tracks: ${error}`);
+                return res.redirect('/#' +
+                  queryString.stringify({
+                    error: 'invalid_token'
+                  }));
+              }
+
+              // logger.info(`Spotify Saved Tracks: ${JSON.stringify(savedTracksBody)}`);
+
+              // Store user-track interactions for saved tracks
+              for (const item of savedTracksBody.items) {
+                const track = item.track;
+                await UserTrack.findOneAndUpdate(
+                  { userId: user.spotifyId, trackId: track.id },
+                  { $set: { saved: true, trackName: track.name } }, // Include trackName
+                  { upsert: true, new: true }
+                );
+              }
+
+              // Redirect to the profile page after setting the cookies
+              res.cookie('spotify_access_token', access_token, { httpOnly: false, secure: true, sameSite: 'None' });
+              res.cookie('spotify_refresh_token', refresh_token, { httpOnly: false, secure: true, sameSite: 'None' });
+              res.redirect(config.frontendUri);
+            });
           });
-        } else {
-          logger.error('Error during token exchange:', error);
-          res.redirect('/#' +
-            queryString.stringify({
-              error: 'invalid_token'
-            }));
-        }
-      });
-    }
+        });
+      } else {
+        logger.error(`Error during token exchange: ${error}`);
+        res.redirect('/#' +
+          queryString.stringify({
+            error: 'invalid_token'
+          }));
+      }
+    });
+  }
 });
   
 app.get('/refresh_token', function(req, res) {
@@ -244,7 +307,7 @@ app.get('/api/spotify-user-data', (req, res) => {
     }
   }, (error, response, body) => {
     if (error) {
-      logger.error('Error fetching Spotify user data:', error);
+      logger.error(`Error fetching Spotify user data: ${error}`);
       return res.status(500).json({ error: 'Failed to fetch Spotify user data' });
     }
 
@@ -252,7 +315,7 @@ app.get('/api/spotify-user-data', (req, res) => {
       const data = JSON.parse(body);
       res.status(response.statusCode).json(data);
     } catch (parseError) {
-      logger.error('Error parsing Spotify user data:', parseError);
+      logger.error(`Error parsing Spotify user data: ${parseError}`);
       res.status(500).json({ error: 'Failed to parse Spotify user data' });
     }
   });
@@ -270,7 +333,7 @@ app.get('/api/spotify-top-artists', (req, res) => {
     }
   }, (error, response, body) => {
     if (error) {
-      logger.error('Error fetching top artists:', error);
+      logger.error(`Error fetching top artists: ${error}`);
       return res.status(500).json({ error: 'Failed to fetch top artists' });
     }
     // console.log("Top Artists: ", body);
@@ -279,7 +342,7 @@ app.get('/api/spotify-top-artists', (req, res) => {
       // console.log("Top Artists Data: ", data);
       res.status(response.statusCode).json(data);
     } catch (parseError) {
-      logger.error('Error parsing top artists:', parseError);
+      logger.error(`Error parsing top artists: ${parseError}`);
       res.status(500).json({ error: 'Failed to parse top artists' });
     }
   });
@@ -297,17 +360,41 @@ app.get('/api/spotify-top-tracks', (req, res) => {
     }
   }, (error, response, body) => {
     if (error) {
-      logger.error('Error fetching top tracks:', error);
+      logger.error(`Error fetching top tracks: ${error}`);
       return res.status(500).json({ error: 'Failed to fetch top tracks' });
     }
     try {
       const data = JSON.parse(body);
-      logger.info("Top Tracks Data: ", data);
+      // logger.info(`Top Tracks Data: ${JSON.stringify(data)}`);
       res.status(response.statusCode).json(data);
     } catch (parseError) {
-      logger.error('Error parsing top tracks:', parseError);
+      logger.error(`Error parsing top tracks: ${parseError}`);
       res.status(500).json({ error: 'Failed to parse top tracks' });
     }
   });
 });
 
+// Endpoint to get the user-item matrix
+app.get('/api/user-item-matrix', async (req, res) => {
+  try {
+    const userItemMatrix = await buildUserItemMatrix();
+    res.json(userItemMatrix);
+    console.log("User-Item Matrix: ", userItemMatrix);
+  } catch (error) {
+    logger.error('Error building user-item matrix:', error);
+    res.status(500).json({ error: 'Failed to build user-item matrix' });
+  }
+});
+
+// Endpoint to get recommendations for a user
+app.get('/api/recommendations/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const recommendations = await getRecommendations(userId);
+    console.log(recommendations);
+    res.json(recommendations);
+  } catch (error) {
+    logger.error('Error getting recommendations:', error);
+    res.status(500).json({ error: 'Failed to get recommendations' });
+  }
+});
