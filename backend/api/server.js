@@ -37,6 +37,7 @@ const logger = winston.createLogger({
 });
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+// logger.info(`service account: ${JSON.stringify(serviceAccount)}`);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -92,7 +93,6 @@ app.use(express.static(path.join(__dirname, '../frontend/build')));
 
 // Serve static files from the public directory
 // Music from #Uppbeat (free for Creators!):
-// https://uppbeat.io/t/adi-goldstein/i-dont-need-your-love
 // https://uppbeat.io/t/adi-goldstein/i-dont-need-your-love
 // License code: O7PW0MDMVUDSBKIO
 app.use('/audio', express.static(path.join(__dirname, '../frontend/public/audio')));
@@ -183,7 +183,7 @@ app.get('/callback', async function(req, res) {
           }
 
           // Create a Firebase custom token
-          // logger.info(`Creating Firebase custom token for user: ${body.id}`);
+          logger.info(`Creating Firebase custom token`);
           const firebaseToken = await admin.auth().createCustomToken(body.id);
           res.cookie('firebase_token', firebaseToken, { httpOnly: false, secure: true, sameSite: 'None' });
 
@@ -199,12 +199,12 @@ app.get('/callback', async function(req, res) {
               logger.error(`Error fetching Spotify top tracks: ${error}`);
               return res.redirect('/signin?error=invalid_token');
             }
-
+            logger.info('Getting Spotify Top Tracks');
             // logger.info(`Spotify Top Tracks: ${JSON.stringify(topTracksBody)}`);
 
             // Store user-track interactions in the database
             for (const track of topTracksBody.items) {
-              console.log('userTrack ids: ', user._id, user.spotifyId);
+              // console.log('userTrack ids: ', user._id, user.spotifyId);
               await UserTrack.findOneAndUpdate(
                 { userId: user.spotifyId, trackId: track.id },
                 { $inc: { playCount: 1 }, $set: { trackName: track.name } }, // Include trackName
@@ -224,7 +224,7 @@ app.get('/callback', async function(req, res) {
                 logger.error(`Error fetching Spotify saved tracks: ${error}`);
                 return res.redirect('/signin?error=invalid_token');
               }
-
+              logger.info('Getting Spotify Saved Tracks');
               // logger.info(`Spotify Saved Tracks: ${JSON.stringify(savedTracksBody)}`);
 
               // Store user-track interactions for saved tracks
