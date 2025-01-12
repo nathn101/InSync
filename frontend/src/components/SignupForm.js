@@ -183,11 +183,6 @@ const SignUp = () => {
                             <path fill="none" d="M0 0h48v48H0z"/>
                         </svg>
                     </button>
-                    <button onClick={() => handleOAuthSignIn(facebookProvider)} className="p-2 rounded bg-white hover:bg-gray-200 text-black w-12 h-12 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-6 h-6">
-                            <path fill="#3B5998" d="M24 1C11.3 1 1 11.3 1 24c0 11.6 8.4 21.2 19.3 23.4v-16.5h-5.8v-6.9h5.8v-5.3c0-5.7 3.4-8.9 8.6-8.9 2.5 0 5.1.4 5.1.4v5.6h-2.9c-2.9 0-3.8 1.8-3.8 3.6v4.6h6.5l-1 6.9h-5.5V47.4C38.6 45.2 47 35.6 47 24 47 11.3 36.7 1 24 1z"/>
-                        </svg>
-                    </button>
                 </div>
                 <div className="mt-6">
                     <p>Already have an account? <Link to="/SignIn" className="text-green-500 hover:underline">Sign in</Link></p>

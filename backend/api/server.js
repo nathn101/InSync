@@ -254,8 +254,10 @@ app.get('/callback', async function(req, res) {
                   { upsert: true, new: true }
                 );
               }
-
+              
               // Redirect to the profile page after setting the cookies
+              logger.info('Redirecting to the profile page');
+              logger.info('Setting cookies');
               res.cookie('spotify_access_token', access_token, { httpOnly: false, secure: true, sameSite: 'None' });
               res.cookie('spotify_refresh_token', refresh_token, { httpOnly: false, secure: true, sameSite: 'None' });
               res.redirect(config.frontendUri);
