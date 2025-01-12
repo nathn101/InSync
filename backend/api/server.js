@@ -77,6 +77,13 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
+// Middleware to log the IP address of incoming requests
+app.use((req, res, next) => {
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  logger.info(`Incoming request from IP: ${ip}`);
+  next();
+});
+
 app.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
 });
