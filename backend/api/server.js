@@ -94,10 +94,7 @@ app.use('/manifest.json', express.static(path.join(__dirname, '../frontend/publi
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(MONGODB_URI)
 .then(() => logger.info('MongoDB connected'))
 .catch(err => logger.error('MongoDB connection error:', err));
 
