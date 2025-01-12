@@ -92,7 +92,12 @@ app.use(express.static(path.join(__dirname, '../frontend/build')));
 app.use('/audio', express.static(path.join(__dirname, '../frontend/public/audio')));
 app.use('/manifest.json', express.static(path.join(__dirname, '../frontend/public/manifest.json')));
 
-connectDB()
+const MONGODB_URI = process.env.MONGODB_URI;
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
 .then(() => logger.info('MongoDB connected'))
 .catch(err => logger.error('MongoDB connection error:', err));
 

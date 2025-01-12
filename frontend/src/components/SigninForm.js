@@ -8,6 +8,7 @@ import config from '../context/config';
 const SignIn = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [error, setError] = useState('');
     const history = useHistory();
@@ -43,12 +44,19 @@ const SignIn = () => {
 
     const handleSpotifyLogin = () => {
         console.log(config.SPOTIFY_LOGIN_URL);
-        window.location.href = config.SPOTIFY_LOGIN_URL;
-        const urlParams = new URLSearchParams(window.location.search);
-        const errorParam = urlParams.get('error');
-        if (errorParam) {
-            setError('The app is in development mode and requires access to be granted by the developer.');
+        setLoading(true);
+        try {
+            window.location.href = config.SPOTIFY_LOGIN_URL;
+        } catch (error) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const errorParam = urlParams.get('error');
+            if (errorParam) {
+                setError('The app is in development mode and requires access to be granted by the developer.');
+            }
+        } finally {
+            setLoading(false);
         }
+        
     };
 
     const handleOAuthSignIn = async (provider) => {
