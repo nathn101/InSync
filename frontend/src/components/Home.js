@@ -7,6 +7,7 @@ const Home = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [trackDetails, setTrackDetails] = useState({ name: '', artist: '' });
     const animationRef = useRef(null);
     const audioContextRef = useRef(null);
     const analyserRef = useRef(null);
@@ -92,6 +93,7 @@ const Home = () => {
 
         audio.addEventListener('canplaythrough', () => {
             setIsLoaded(true);
+            setTrackDetails({ name: 'I Don\'t Need Your Love', artist: 'Adi Goldstein' }); // Set track details
         });
 
         audioRef.current = audio;
@@ -155,6 +157,11 @@ const Home = () => {
                     {isMuted ? <FaVolumeMute className="w-4 h-4 md:w-5 md:h-5" /> : <FaVolumeUp className="w-4 h-4 md:w-5 md:h-5" />}
                 </button>
             </div>
+            {isPlaying && (
+                <div className="absolute bottom-4 w-full text-center">
+                    <p className="text-white text-s md:text-xl">Now Playing: {trackDetails.name} by {trackDetails.artist}</p>
+                </div>
+            )}
         </div>
     );
 }

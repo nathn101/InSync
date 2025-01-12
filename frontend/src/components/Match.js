@@ -7,7 +7,7 @@ const Match = () => {
     const [error, setError] = useState(null);
 
     const fetchRecommendations = async () => {
-        const userId = Cookies.get('spotify_id'); // Assuming the user ID is stored in the firebase_token cookie
+        const userId = Cookies.get('spotify_id');
         try {
             const response = await fetch(`${config.RECOMMENDATIONS_URL}/${userId}`, {
                 method: 'GET',

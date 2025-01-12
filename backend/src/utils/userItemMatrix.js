@@ -6,11 +6,11 @@ const buildUserItemMatrix = async () => {
   const userItemMatrix = {};
 
   for (const user of users) {
-    const userTracks = await UserTrack.find({ userId: user.spotifyId });
-    userItemMatrix[user.spotifyId] = {};
+    const userTracks = await UserTrack.find({ userId: user._id }); // Use ObjectId
+    userItemMatrix[user._id] = {};
 
     for (const userTrack of userTracks) {
-      userItemMatrix[user.spotifyId][userTrack.trackId] = userTrack.playCount;
+      userItemMatrix[user._id][userTrack.trackId] = userTrack.playCount;
     }
   }
 

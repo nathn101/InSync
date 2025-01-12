@@ -15,11 +15,20 @@ const nodemailer = require('nodemailer'); // Import nodemailer
 const admin = require('firebase-admin'); // Import Firebase Admin SDK
 const config = require('../src/config.js'); // Import config
 const winston = require('winston'); // Import winston
+const { ObjectId } = require('mongodb'); // Import ObjectId
 
 const User = require('../src/config/User');
 const UserTrack = require('../src/config/UserTrack');
 const buildUserItemMatrix = require('../src/utils/userItemMatrix');
 const getRecommendations = require('../src/utils/collaborativeFiltering');
+const connectDB = require('../src/config/mongodb'); // Import the connectDB function
+
+const generateRandomString = (length) => {
+  return crypto
+.randomBytes(60)
+.toString('hex')
+.slice(0, length);
+};
 
 // Configure winston
 const logger = winston.createLogger({
@@ -68,23 +77,8 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-.then(() => {
-    logger.info('Connected to MongoDB');
-})
-.catch((err) => {
-    logger.error(`Error connecting to MongoDB: ${err}`);
-});
-
-const generateRandomString = (length) => {
-    return crypto
-  .randomBytes(60)
-  .toString('hex')
-  .slice(0, length);
-};
-
 app.listen(port, () => {
-    logger.info(`Server is running on port ${port}`);
+  logger.info(`Server is running on port ${port}`);
 });
 app.listen(8888);
 
@@ -97,6 +91,10 @@ app.use(express.static(path.join(__dirname, '../frontend/build')));
 // License code: O7PW0MDMVUDSBKIO
 app.use('/audio', express.static(path.join(__dirname, '../frontend/public/audio')));
 app.use('/manifest.json', express.static(path.join(__dirname, '../frontend/public/manifest.json')));
+
+connectDB()
+.then(() => logger.info('MongoDB connected'))
+.catch(err => logger.error('MongoDB connection error:', err));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
@@ -149,7 +147,7 @@ app.get('/callback', async function(req, res) {
       },
       json: true
     };
-
+    logger.info('Requesting auth token from Spotify');
     request.post(authOptions, async function(error, response, body) {
       if (!error && response.statusCode === 200) {
         var access_token = body.access_token,
@@ -167,19 +165,31 @@ app.get('/callback', async function(req, res) {
             logger.error('Error fetching Spotify user data:', error);
             return res.redirect('/signin?error=invalid_token');
           }
-          // logger.info(`Spotify User Data: ${JSON.stringify(body)}`);
+          logger.info(`Spotify User Data: ${JSON.stringify(body)}`);
+          logger.info('Checking if user exists in the database');
+          logger.info(`User ID: ${body.id}`);
           
+          let user;
           // Check if user already exists in the database
-          let user = await User.findOne({ spotifyId: body.id });
-          if (!user) {
-            // Create a new user if not found
-            user = new User({
-              spotifyId: body.id,
-              displayName: body.display_name,
-              email: body.email,
-              images: body.images
-            });
-            await user.save();
+          try {
+            user = await User.findOne({ spotifyId: body.id });
+
+            if (!user) {
+              // Create a new user if not found
+              user = new User({
+                spotifyId: body.id,
+                displayName: body.display_name,
+                email: body.email,
+                images: body.images
+              });
+              await user.save();
+            }
+
+            // Store the MongoDB ObjectId in the cookies
+            res.cookie('user_id', user._id.toString(), { httpOnly: true, secure: true, sameSite: 'None' });
+          } catch (error) {
+            logger.error('Error finding user:', error);
+            return res.redirect(config.signinErrorUri);
           }
 
           // Create a Firebase custom token
@@ -204,9 +214,8 @@ app.get('/callback', async function(req, res) {
 
             // Store user-track interactions in the database
             for (const track of topTracksBody.items) {
-              // console.log('userTrack ids: ', user._id, user.spotifyId);
               await UserTrack.findOneAndUpdate(
-                { userId: user.spotifyId, trackId: track.id },
+                { userId: user._id, trackId: track.id },
                 { $inc: { playCount: 1 }, $set: { trackName: track.name } }, // Include trackName
                 { upsert: true, new: true }
               );
@@ -231,7 +240,7 @@ app.get('/callback', async function(req, res) {
               for (const item of savedTracksBody.items) {
                 const track = item.track;
                 await UserTrack.findOneAndUpdate(
-                  { userId: user.spotifyId, trackId: track.id },
+                  { userId: user._id, trackId: track.id },
                   { $set: { saved: true, trackName: track.name } }, // Include trackName
                   { upsert: true, new: true }
                 );
