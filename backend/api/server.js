@@ -190,7 +190,7 @@ app.get('/callback', async function(req, res) {
             // Store the MongoDB ObjectId in the cookies
             res.cookie('user_id', user._id.toString(), { httpOnly: true, secure: true, sameSite: 'None' });
           } catch (error) {
-            logger.error('Error finding user:', error);
+            logger.info('Error finding user:', error);
             return res.redirect(config.signinErrorUri);
           }
 
