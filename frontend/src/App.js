@@ -3,8 +3,7 @@ import Navbar from './components/Navbar';
 import Home from './components/Home';
 import Match from './components/Match';
 import Profile from './components/Profile';
-import SignIn from './components/SigninForm';
-import SignUp from './components/SignupForm';
+import Auth from './components/Auth';
 import ForgotPassword from './components/ForgotPassword';
 import Dashboard from './components/Dashboard';
 import About from './components/About';
@@ -34,11 +33,8 @@ function App() {
               <Route exact path="/Home">
                 <Home />
               </Route>
-              <Route exact path="/SignIn">
-                <SignIn />
-              </Route>
-              <Route exact path = "/SignUp">
-                <SignUp />
+              <Route exact path="/Auth">
+                <Auth />
               </Route>
               <Route exact path = "/ForgotPassword">
                 <ForgotPassword />

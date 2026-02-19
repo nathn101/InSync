@@ -1,167 +1,90 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { FaPause, FaPlay, FaVolumeMute, FaVolumeUp } from 'react-icons/fa';
+import React, { useState } from "react";
+import { FaPlay, FaStop } from "react-icons/fa"; // Switched Pause to Stop for better semantics
+import { Link, useHistory } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import heroImage from '../assets/hero-image.png'; // Import the image
+import { Canvas } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+import { EffectComposer, Bloom, TiltShift2, Vignette } from "@react-three/postprocessing"; // npm install @react-three/postprocessing
+import AudioVisualizerTunnel from "./AudioVisualizerTunnel";
+
+const CameraRig = () => {
+    useFrame((state) => {
+        // Read mouse position (x and y are between -1 and 1)
+        const mouseX = state.mouse.x;
+        const mouseY = state.mouse.y;
+
+        // Smoothly interpolate current camera position to target position
+        // We move X quite a bit (mouseX * 1.5)
+        // We move Y a little less, and keep the base height of 2 ((mouseY * 0.5) + 2)
+        state.camera.position.x = THREE.MathUtils.lerp(
+            state.camera.position.x,
+            mouseX * 0.5,
+            0.05
+        );
+        state.camera.position.y = THREE.MathUtils.lerp(
+            state.camera.position.y,
+            mouseY * 0.65 + 1.5,
+            0.05
+        );
+
+        // Ensure camera always looks at the end of the tunnel
+        state.camera.lookAt(0, -1, -5);
+    });
+    return null; // This component renders nothing visual
+};
 
 const Home = () => {
-    const canvasRef = useRef(null);
-    const audioRef = useRef(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [trackDetails, setTrackDetails] = useState({ name: '', artist: '' });
-    const animationRef = useRef(null);
-    const audioContextRef = useRef(null);
-    const analyserRef = useRef(null);
-    const dataArrayRef = useRef(null);
-
-    const gaussianBlur = (data, radius) => {
-        const kernelSize = 2 * radius + 1;
-        const kernel = new Array(kernelSize).fill(1 / kernelSize);
-        const blurredData = new Uint8Array(data.length);
-
-        for (let i = 0; i < data.length; i++) {
-            let sum = 0;
-            for (let j = -radius; j <= radius; j++) {
-                const index = Math.min(Math.max(i + j, 0), data.length - 1);
-                sum += data[index] * kernel[j + radius];
-            }
-            blurredData[i] = sum;
-        }
-
-        return blurredData;
-    };
-
-    const draw = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        const analyser = analyserRef.current;
-        const dataArray = dataArrayRef.current;
-        analyser.getByteFrequencyData(dataArray);
-        const blurredData = gaussianBlur([ ...[...dataArray].slice(0, 20), ...[...dataArray].slice(0, 20).reverse()], 3);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        const barWidth = (canvas.width / blurredData.length); // Adjusted width
-        let barHeight;
-        const curvePoints = [];
-
-        for (let i = 0; i < blurredData.length; i++) {
-            barHeight = blurredData[i] * 4; // Increased height
-            const rectHeight = 10;
-            const numRectangles = Math.floor(barHeight / rectHeight);
-            const gap = 3.5; // Gap between rectangles
-            const gradient = ctx.createLinearGradient(0, canvas.height - barHeight, 0, canvas.height);
-            gradient.addColorStop(0, 'green');
-            gradient.addColorStop(1, 'yellow');
-            ctx.fillStyle = gradient;
-            for (let j = 0; j < numRectangles; j++) {
-                ctx.beginPath();
-                ctx.moveTo(i * barWidth, canvas.height - (rectHeight + gap) * (j + 1) + 5);
-                ctx.arcTo(i * barWidth, canvas.height - (rectHeight + gap) * (j + 1), i * barWidth + barWidth, canvas.height - (rectHeight + gap) * (j + 1), 5);
-                ctx.arcTo(i * barWidth + barWidth, canvas.height - (rectHeight + gap) * (j + 1), i * barWidth + barWidth, canvas.height - (rectHeight + gap) * (j + 1) + rectHeight, 5);
-                ctx.arcTo(i * barWidth + barWidth, canvas.height - (rectHeight + gap) * (j + 1) + rectHeight, i * barWidth, canvas.height - (rectHeight + gap) * (j + 1) + rectHeight, 5);
-                ctx.arcTo(i * barWidth, canvas.height - (rectHeight + gap) * (j + 1) + rectHeight, i * barWidth, canvas.height - (rectHeight + gap) * (j + 1), 5);
-                ctx.closePath();
-                ctx.fill();
-            }
-            curvePoints.push({ x: i * barWidth + barWidth / 2, y: canvas.height - barHeight });
-        }
-        animationRef.current = requestAnimationFrame(draw);
-    };
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        audioContextRef.current = audioContext;
-        analyserRef.current = analyser;
-        dataArrayRef.current = dataArray;
-
-        // Ensure the path to the audio file is correct
-        const audio = new Audio('/audio/i-dont-need-your-love-adi-goldstein-main-version-06-17-13841.mp3');
-        audio.crossOrigin = "anonymous";
-        audio.volume = 0.008;
-        audio.playbackRate = 0.75; // Slow down the music
-        audio.loop = true; // Repeat the audio
-        audio.preload = 'auto'; // Preload the audio
-
-        audio.addEventListener('canplaythrough', () => {
-            setIsLoaded(true);
-            setTrackDetails({ name: 'I Don\'t Need Your Love', artist: 'Adi Goldstein' }); // Set track details
-        });
-
-        audioRef.current = audio;
-        const source = audioContext.createMediaElementSource(audio);
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-
-        return () => {
-            audio.pause();
-            audioContext.close();
-            cancelAnimationFrame(animationRef.current);
-        };
-    }, []);
-
-    const handlePlayPause = async () => {
-        if (isLoaded) {
-            if (audioContextRef.current.state === 'suspended') {
-                await audioContextRef.current.resume();
-            }
-            if (!isPlaying) {
-                try {
-                    await audioRef.current.play();
-                    animationRef.current = requestAnimationFrame(draw);
-                } catch (error) {
-                    console.error('Error playing audio:', error);
-                }
-            } else {
-                audioRef.current.pause();
-                cancelAnimationFrame(animationRef.current);
-            }
-            setIsPlaying(!isPlaying);
-        } else {
-            console.log('Audio is not fully loaded yet.');
-        }
-    };
-
-    const handleMuteUnmute = () => {
-        audioRef.current.muted = !audioRef.current.muted;
-        setIsMuted(!isMuted);
-    };
+    const [isActive, setIsActive] = useState(false);
 
     return (
-        <div className="relative flex justify-center items-center flex-grow bg-gradient-to-b from-black via-gray-900 to-green-900 min-h-screen">
-            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full"></canvas>
-            <div className="relative bg-opacity-50 p-8 md:p-16 rounded-lg text-center text-white max-w-4xl w-full">
-                <h1 className="text-2xl md:text-4xl mb-2 md:mb-4">Welcome to <span className="text-green-500">InSync</span></h1>
-                <p className="text-lg md:text-xl">Your personalized music circle</p>
+        <div className="relative w-full h-screen bg-black overflow-hidden font-sans">
+
+            {/* --- NOISE TEXTURE OVERLAY --- */}
+            <div className="noise-bg"></div>
+
+            {/* --- 3D SCENE --- */}
+            <div className="absolute inset-0 z-0">
+                <Canvas camera={{ position: [0, 2, 5], fov: 60 }}>
+                    <color attach="background" args={['#050505']} />
+                    <fog attach="fog" args={['#050505', 5, 10]} />
+
+                    <AudioVisualizerTunnel isActive={isActive} />
+
+                    <EffectComposer disableNormalPass>
+                        <Bloom luminanceThreshold={0} mipmapBlur intensity={0.3} />
+                        <Vignette eskil={false} offset={0.1} darkness={1.1} />
+                    </EffectComposer>
+                    <CameraRig />
+                </Canvas>
             </div>
-            <div className="absolute bottom-4 left-2 flex space-x-2 md:space-x-4">
-                <button 
-                    onClick={handlePlayPause} 
-                    className="text-white p-2 md:p-4 flex items-center justify-center"
-                    disabled={!isLoaded}
-                >
-                    {isPlaying ? <FaPause className="w-4 h-4 md:w-5 md:h-5" /> : <FaPlay className="w-4 h-4 md:w-5 md:h-5" />}
-                </button>
-                <button 
-                    onClick={handleMuteUnmute} 
-                    className="text-white p-2 md:p-4 flex items-center justify-center"
-                >
-                    {isMuted ? <FaVolumeMute className="w-4 h-4 md:w-5 md:h-5" /> : <FaVolumeUp className="w-4 h-4 md:w-5 md:h-5" />}
-                </button>
-            </div>
-            {isPlaying && (
-                <div className="absolute bottom-4 w-full text-center">
-                    <p className="text-white text-s md:text-xl">Now Playing: {trackDetails.name} by {trackDetails.artist}</p>
+
+            {/* --- HERO UI OVERLAY --- */}
+            <div className="relative z-10 flex flex-col items-center justify-center h-full pointer-events-none px-4 pb-20">
+
+                {/* 1. Main Title with "Syne" font */}
+                <div className="text-center space-y-0">
+                    <h1 className="font-display text-8xl md:text-8xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-green-200 to-green-900 drop-shadow-2xl mix-blend-overlay">
+                        InSync
+                    </h1>
+
+                    {/* 2. Subtitle with wider spacing */}
+                    <p className="text-white/80 text-xs md:text-sm tracking-[0.5em] uppercase font-medium backdrop-blur-sm">
+                        A new channel of music discovery
+                    </p>
                 </div>
-            )}
+
+                {/* 3. Modern Call to Action (Glass Button) */}
+                <div className="mt-12 pointer-events-auto flex flex-col items-center gap-6">
+                    <button
+                        onClick={handleGetStarted}
+                        className="px-8 py-3 bg-green-500 text-black font-bold rounded-full hover:bg-green-400 transition transform hover:scale-105"
+                    >
+                        Get Started
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

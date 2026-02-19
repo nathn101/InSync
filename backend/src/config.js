@@ -1,8 +1,8 @@
 const config = {
     development: {
-        redirectUri: 'http://localhost:8888/callback',
-        signinErrorUri: 'http://localhost:3000/SignIn?error=invalid_user',
-        frontendUri: 'http://localhost:3000/profile',
+        redirectUri: 'http://127.0.0.1:8888/callback',
+        signinErrorUri: 'http://127.0.0.1:3000/SignIn?error=invalid_user',
+        frontendUri: 'http://127.0.0.1:3000/profile',
     },
     production: {
         redirectUri: 'https://in-sync-iota.vercel.app/callback',
